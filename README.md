@@ -25,7 +25,7 @@ import (
 	"github.com/aperdana/batcher"
 )
 
-func Example() {
+func main() {
 	// Create a new Batcher
 	b := batcher.New(func(batched []interface{}) {
 		if len(batched) > 0 {
