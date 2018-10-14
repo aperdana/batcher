@@ -1,32 +1,10 @@
 package batcher
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
 )
-
-func Example() {
-	// Create a new Batcher
-	b := New(func(batched []interface{}) {
-		fmt.Printf("Here's the batched items: %v\n", batched)
-	}, time.Second)
-
-	// Starts listening for items
-	b.Listen()
-
-	// Batch item
-	b.Batch("I")
-	b.Batch("Am")
-	b.Batch("The")
-	b.Batch("Great")
-
-	time.Sleep(time.Second)
-
-	// Should print:
-	// Here's the batched items: I Am The Great
-}
 
 func TestBatcher_receive(t *testing.T) {
 	type fields struct {
@@ -97,6 +75,64 @@ func TestBatcher_receive(t *testing.T) {
 			go tt.seeder(b.buffer)
 			if got := b.receive(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Batcher.receive() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSetBufferSize(t *testing.T) {
+	type args struct {
+		s int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			"s <= 0",
+			args{-1},
+			DefaultBufferSize,
+		},
+		{
+			"s > 0",
+			args{1},
+			1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := New(nil, time.Second, SetBufferSize(tt.args.s)); got.bufSize != tt.want {
+				t.Errorf("SetBufferSize() result in Buffer.bufSize = %v, want %v", got.bufSize, tt.want)
+			}
+		})
+	}
+}
+
+func TestSetMaxBatchSize(t *testing.T) {
+	type args struct {
+		s int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			"s <= 0",
+			args{-1},
+			0,
+		},
+		{
+			"s > 0",
+			args{1},
+			1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := New(nil, time.Second, SetMaxBatchSize(tt.args.s)); got.size != tt.want {
+				t.Errorf("SetMaxBatchSize() result in Buffer.size = %v, want %v", got.size, tt.want)
 			}
 		})
 	}

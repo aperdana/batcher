@@ -15,6 +15,7 @@ const (
 // it will also add size as constraint.
 type Batcher struct {
 	size    int
+	bufSize int
 	timeout time.Duration
 	buffer  chan interface{}
 	do      func([]interface{})
@@ -31,7 +32,7 @@ type Option func(*Batcher)
 func SetBufferSize(s int) Option {
 	return func(b *Batcher) {
 		if s > 0 {
-			b.buffer = make(chan interface{}, s)
+			b.bufSize = s
 		}
 	}
 }
@@ -52,11 +53,13 @@ func New(do func([]interface{}), timeout time.Duration, opts ...Option) *Batcher
 	b := &Batcher{
 		timeout: timeout,
 		do:      do,
-		buffer:  make(chan interface{}, DefaultBufferSize),
+		bufSize: DefaultBufferSize,
 	}
 	for _, opt := range opts {
 		opt(b)
 	}
+	b.buffer = make(chan interface{}, b.bufSize)
+
 	return b
 }
 
